@@ -6,6 +6,12 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.Azure.WebJobs.Extensions.EventGrid" Version="2.1.0" />
     <PackageReference Include="Microsoft.NET.Sdk.Functions" Version="3.0.13" />
+    <PackageReference Include="SixLabors.ImageSharp" Version="2.1.0" />
+    <PackageReference Include="Azure.Storage.Blobs" Version="12.11.0" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Remove="SixLabors.ImageSharp" />
+    <None Remove="Azure.Storage.Blobs" />
   </ItemGroup>
   <ItemGroup>
     <None Update="host.json">
