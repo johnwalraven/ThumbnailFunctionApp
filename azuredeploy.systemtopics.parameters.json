@@ -1,0 +1,18 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "systemTopicName": {
+            "value": "image-thumbnail-systop" 
+        },
+        "storageAccountName": {
+            "value": "imagethumbailsa"
+        },
+        "functionName": {
+            "value": "image-thumbnail-fa"
+        },
+        "eventSubjectFilter" :{
+            "value": "/blobServices/default/containers/images/"
+        }
+    }
+}
