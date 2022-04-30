@@ -1,0 +1,145 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "storageAccountName": {
+            "type": "string",
+            "metadata": {
+                "description": "The storage account name"
+            }
+        },
+        "imageStorageContainerName": {
+            "type": "string",
+            "metadata": {
+                "description": "Image storage container name"
+            }
+        },
+        "functionName": {
+            "type": "string",
+            "metadata": {
+                "description": "Function app name"
+            }
+        },
+        "appServiceName": {
+            "type": "string",
+            "metadata": {
+                "description": "description"
+            }
+        },
+        "thumbnailStorageContainerName": {
+            "type": "string",
+            "metadata": {
+                "description": "The storage containter to save the thumbnails"
+            }
+        },
+        "thumbnailWidth": {
+            "type": "int",
+            "metadata": {
+                "description": "The width to resize the image to"
+            }
+        }
+    },
+    "functions": [],
+    "variables": { "hostingPlanName": "[parameters('appServiceName')]" },
+    "resources": [
+        {
+            "name": "[parameters('storageAccountName')]",
+            "type": "Microsoft.Storage/storageAccounts",
+            "apiVersion": "2021-04-01",
+            "tags": {
+                "displayName": "[parameters('storageAccountName')]"
+            },
+            "location": "[resourceGroup().location]",
+            "kind": "StorageV2",
+            "sku": {
+                "name": "Standard_LRS",
+                "tier": "Standard"
+            }
+        },
+        {
+            "name": "[concat(parameters('storageAccountName'), '/default/', parameters('imageStorageContainerName'))]",
+            "type": "Microsoft.Storage/storageAccounts/blobServices/containers",
+            "apiVersion": "2021-04-01",
+            "dependsOn": [
+                "[concat('Microsoft.Storage/storageAccounts/', parameters('storageAccountName'))]"
+            ],
+            "properties": {
+                "publicAccess": "None"
+            }
+        },
+        {
+            "name": "[concat(parameters('storageAccountName'), '/default/', parameters('thumbnailStorageContainerName'))]",
+            "type": "Microsoft.Storage/storageAccounts/blobServices/containers",
+            "apiVersion": "2021-04-01",
+            "dependsOn": [
+                "[concat('Microsoft.Storage/storageAccounts/', parameters('storageAccountName'))]"
+            ],
+            "properties": {
+                "publicAccess": "None"
+            }
+        },
+        {
+            "name": "[variables('hostingPlanName')]",
+            "type": "Microsoft.Web/serverfarms",
+            "apiVersion": "2020-12-01",
+            "location": "[resourceGroup().location]",
+            "sku": {
+                "name": "F1",
+                "capacity": 1
+            },
+            "tags": {
+                "displayName": "[variables('hostingPlanName')]"
+            },
+            "properties": {
+                "name": "[variables('hostingPlanName')]"
+            }
+        },
+        {
+            "name": "[parameters('functionName')]",
+            "type": "Microsoft.Web/sites",
+            "apiVersion": "2020-12-01",
+            "location": "[resourceGroup().location]",
+            "kind": "functionapp",
+            "dependsOn": [
+                "[resourceId('Microsoft.Web/serverfarms', variables('hostingPlanName'))]",
+                "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName'))]"
+            ],
+            "properties": {
+                "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', variables('hostingPlanName'))]",
+                "siteConfig": {
+                    "appSettings": [
+                        {
+                            "name": "AzureWebJobsDashboard",
+                            "value": "[concat('DefaultEndpointsProtocol=https;AccountName=', parameters('storageAccountName'), ';AccountKey=', listKeys(resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName')),'2015-05-01-preview').key1)]"
+                        },
+                        {
+                            "name": "AzureWebJobsStorage",
+                            "value": "[concat('DefaultEndpointsProtocol=https;AccountName=', parameters('storageAccountName'), ';AccountKey=', listKeys(resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName')),'2015-05-01-preview').key1)]"
+                        },
+                        {
+                            "name": "FUNCTIONS_EXTENSION_VERSION",
+                            "value": "~3"
+                        },
+                        {
+                            "name": "FUNCTIONS_WORKER_RUNTIME",
+                            "value": "dotnet"
+                        },
+                        {
+                            "name": "THUMBNAIL_CONTAINER_NAME",
+                            "value": "[parameters('thumbnailStorageContainerName')]"
+                        },
+                        {
+                            "name": "IMAGES_CONTAINER_NAME",
+                            "value": "[parameters('imageStorageContainerName')]"
+                        },
+                        {
+                            "name": "THUMBNAIL_WIDTH",
+                            "value": "[parameters('thumbnailWidth')]"
+                        }
+                    ]
+                }
+            }
+        }
+    ],
+    "outputs": {}
+}
