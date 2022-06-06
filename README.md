@@ -1,5 +1,8 @@
 # ThumbnailFunctionApp
 
+* .Net version: 6
+* Function Runtime: v4
+
 This function app responds to a new image that is added to a blob container using an EventGridEvent. The function app generates the thumbnail and places it a different container with the same image name. The function app can create thumbnails for png, jpg, jpeg, and gif.
 
 The width of the thumbnail can be set in the deployment via the 'thumbnailWidth' property. This can also be updated at anytime after by changing the Function App Configuration in the Azure Portal.
@@ -38,4 +41,8 @@ az deployment group create \
              'eventSubjectFilter=/blobServices/default/containers/images/'
 ```
 
-Once the deployment has succeeded, upload an image to the image container and check the thumbnail container for your image. 
+Once the deployment has succeeded, upload an image to the image container and check the thumbnail container for your image.
+
+# Run locally.
+
+To run this function app locally, you will need to install ngrok and set event grid to use a webhook. There is a tutorial on how to set this up from Microsoft, it can be found [here](https://docs.microsoft.com/en-us/azure/azure-functions/functions-debug-event-grid-trigger-local).

@@ -1,17 +1,17 @@
 // Default URL for triggering event grid function in the local environment.
-// http://localhost:7071/runtime/webhooks/EventGrid?functionName={functionname}
+// http://localhost:7071/runtime/webhooks/EventGrid?functionName=ThumbnailFunction
 using System;
 using Microsoft.Azure.WebJobs;
-using Microsoft.Azure.EventGrid.Models;
 using Microsoft.Azure.WebJobs.Extensions.EventGrid;
 using Microsoft.Extensions.Logging;
-using Newtonsoft.Json.Linq;
 using System.IO;
 using System.Threading.Tasks;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Processing;
 using Azure.Storage.Blobs;
 using ThumbnailFunctionApp;
+using Azure.Messaging.EventGrid;
+using Azure.Messaging.EventGrid.SystemEvents;
 
 namespace johnwalraven.Thumbnail
 {
@@ -30,7 +30,7 @@ namespace johnwalraven.Thumbnail
         {
             try
             {
-                var createdEvent = ((JObject)eventGridEvent.Data).ToObject<StorageBlobCreatedEventData>();
+                var createdEvent = eventGridEvent.Data.ToObjectFromJson<StorageBlobCreatedEventData>();
                 var extension = Path.GetExtension(createdEvent.Url);
                 var encoder = ThumbnailHelper.GetEncoder(extension);
 
@@ -58,6 +58,7 @@ namespace johnwalraven.Thumbnail
                     image.Save(output, encoder);
                     output.Position = 0;
 
+                    //This will throw a 409 if a blob with the same name already exists.
                     await blobContainerClient.UploadBlobAsync(blobName, output);
                 }
                 else
@@ -67,10 +68,8 @@ namespace johnwalraven.Thumbnail
             }
             catch (Exception ex)
             {
-                log.LogInformation(ex.Message);
-                throw;
+                log.LogCritical(ex.Message);
             }
-
         }
     }
 }
